@@ -77,7 +77,7 @@ export default function PurchasesPage() {
       </div>
 
       <div className="mt-6">
-        {!isSearching && recentData && recentData.content.length > 0 && (
+        {!isSearching && recentData?.content && recentData.content.length > 0 && (
           <>
             <p className="text-gray-500 text-xs mb-3 uppercase tracking-wide font-medium">
               Recent purchases
@@ -98,11 +98,11 @@ export default function PurchasesPage() {
           <p className="text-red-600 text-sm">Something went wrong. Please try again.</p>
         )}
 
-        {isSearching && data && data.content.length === 0 && (
+        {isSearching && data?.content && data.content.length === 0 && (
           <p className="text-gray-500 text-sm">No purchases found for &ldquo;{DOMPurify.sanitize(debouncedQuery)}&rdquo;.</p>
         )}
 
-        {isSearching && data && data.content.length > 0 && (
+        {isSearching && data?.content && data.content.length > 0 && (
           <>
             <p className="text-gray-500 text-xs mb-3">
               {data.totalElements} result{data.totalElements !== 1 ? 's' : ''} found
@@ -111,7 +111,7 @@ export default function PurchasesPage() {
           </>
         )}
 
-        {activeData && activeData.content.length > 0 && (
+        {activeData?.content && activeData.content.length > 0 && (
           <Pagination
             page={activeData.number}
             totalPages={activeData.totalPages}
