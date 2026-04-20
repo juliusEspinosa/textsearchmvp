@@ -1,0 +1,69 @@
+REPO
+https://github.com/juliusEspinosa/textsearchmvp
+
+---
+
+WHAT NEEDS TO RUN
+- A PostgreSQL 15 database (external, not in Docker)
+- The Spring Boot backend (Docker container from backend/Dockerfile)
+
+---
+
+DATABASE SETUP (Postgres 15)
+
+1. Create a database called: itemsearch
+2. Create a user with a password
+3. Run these SQL commands on the database:
+
+   CREATE EXTENSION IF NOT EXISTS pg_trgm;
+   CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+That's it for the DB. The app will create all tables and seed data automatically on first startup (via Flyway migrations).
+
+---
+
+BACKEND SETUP
+
+The backend is in the backend/ folder of the repo. It has a Dockerfile.
+
+Build and run it with these environment variables:
+
+   SPRING_PROFILES_ACTIVE=prod
+   SPRING_DATASOURCE_URL=jdbc:postgresql://<db-host>:<db-port>/itemsearch
+   SPRING_DATASOURCE_USERNAME=<db-user>
+   SPRING_DATASOURCE_PASSWORD=<db-password>
+   JAVA_OPTS=-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0
+
+Replace <db-host>, <db-port>, <db-user>, and <db-password> with the actual Postgres connection details.
+
+To build and run:
+
+   cd backend
+   docker build -t noteslookup-backend .
+   docker run -d \
+     -p 8080:8080 \
+     -e SPRING_PROFILES_ACTIVE=prod \
+     -e SPRING_DATASOURCE_URL=jdbc:postgresql://<db-host>:<db-port>/itemsearch \
+     -e SPRING_DATASOURCE_USERNAME=<db-user> \
+     -e SPRING_DATASOURCE_PASSWORD=<db-password> \
+     -e "JAVA_OPTS=-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0" \
+     --name noteslookup-backend \
+     noteslookup-backend
+
+---
+
+PORTS TO OPEN
+- 8080 (backend API)
+- 80 and 443 (if putting behind a reverse proxy / SSL)
+
+---
+
+HOW TO VERIFY IT'S WORKING
+
+   curl http://<server-ip>:8080/actuator/health
+
+Should return: {"status":"UP"}
+
+Then try:
+
+   curl http://<server-ip>:8080/api/items?size=1
