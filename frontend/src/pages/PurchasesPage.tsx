@@ -6,13 +6,19 @@ import ItemNotesModal from '../components/ItemNotesModal'
 import Pagination from '../components/Pagination'
 import type { PurchaseResponse } from '../api/purchasesApi'
 import DOMPurify from 'dompurify'
+import { jsPDF } from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 function PurchaseTable({
   purchases,
   onItemClick,
+  selectedIds,
+  onToggle,
 }: {
   purchases: PurchaseResponse[]
   onItemClick: (itemId: string) => void
+  selectedIds: Set<string>
+  onToggle: (purchaseId: string) => void
 }) {
   return (
     <table className="w-full border border-gray-200 rounded-lg bg-white text-sm">
@@ -20,7 +26,9 @@ function PurchaseTable({
         <tr className="bg-gray-50 text-left text-gray-600">
           <th className="px-4 py-3 font-medium">Buyer</th>
           <th className="px-4 py-3 font-medium">Item</th>
+          <th className="px-4 py-3 font-medium">Notes</th>
           <th className="px-4 py-3 font-medium text-right">Qty</th>
+          <th className="px-4 py-3 font-medium text-center">Add to Report</th>
         </tr>
       </thead>
       <tbody className="divide-y divide-gray-200">
@@ -35,7 +43,16 @@ function PurchaseTable({
                 {purchase.itemName}
               </button>
             </td>
+            <td className="px-4 py-3 text-gray-500">{purchase.itemNotes ?? '—'}</td>
             <td className="px-4 py-3 text-right text-gray-900">{purchase.quantity}</td>
+            <td className="px-4 py-3 text-center">
+              <input
+                type="checkbox"
+                checked={selectedIds.has(purchase.purchaseId)}
+                onChange={() => onToggle(purchase.purchaseId)}
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+            </td>
           </tr>
         ))}
       </tbody>
@@ -47,6 +64,7 @@ export default function PurchasesPage() {
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(0)
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
+  const [reportIds, setReportIds] = useState<Set<string>>(new Set())
   const debouncedQuery = useDebouncedValue(query, 300)
   const { data, isLoading, isError, isFetching } = usePurchaseSearch(debouncedQuery, page)
   const { data: recentData } = useRecentPurchases(page)
@@ -57,6 +75,42 @@ export default function PurchasesPage() {
   function handleQueryChange(value: string) {
     setQuery(value)
     setPage(0)
+  }
+
+  function handleToggleReport(purchaseId: string) {
+    setReportIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(purchaseId)) {
+        next.delete(purchaseId)
+      } else {
+        next.add(purchaseId)
+      }
+      return next
+    })
+  }
+
+  function handleGenerateReport() {
+    const purchases = activeData?.content?.filter((p) => reportIds.has(p.purchaseId)) ?? []
+    if (purchases.length === 0) return
+
+    const doc = new jsPDF()
+    doc.setFontSize(16)
+    doc.text('Purchases Report', 14, 20)
+    doc.setFontSize(10)
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 28)
+
+    autoTable(doc, {
+      startY: 35,
+      head: [['Buyer', 'Item', 'Notes', 'Qty']],
+      body: purchases.map((p) => [
+        p.buyer,
+        p.itemName,
+        p.itemNotes ?? '—',
+        p.quantity.toString(),
+      ]),
+    })
+
+    doc.save('purchases-report.pdf')
   }
 
   return (
@@ -79,10 +133,19 @@ export default function PurchasesPage() {
       <div className="mt-6">
         {!isSearching && recentData?.content && recentData.content.length > 0 && (
           <>
-            <p className="text-gray-500 text-xs mb-3 uppercase tracking-wide font-medium">
-              Recent purchases
-            </p>
-            <PurchaseTable purchases={recentData.content} onItemClick={setSelectedItemId} />
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-gray-500 text-xs uppercase tracking-wide font-medium">
+                Recent purchases
+              </p>
+              <button
+                onClick={handleGenerateReport}
+                disabled={reportIds.size === 0}
+                className="text-blue-600 hover:text-blue-800 text-xs font-medium disabled:text-gray-300 disabled:cursor-not-allowed"
+              >
+                Generate Report ({reportIds.size})
+              </button>
+            </div>
+            <PurchaseTable purchases={recentData.content} onItemClick={setSelectedItemId} selectedIds={reportIds} onToggle={handleToggleReport} />
           </>
         )}
 
@@ -104,10 +167,19 @@ export default function PurchasesPage() {
 
         {isSearching && data?.content && data.content.length > 0 && (
           <>
-            <p className="text-gray-500 text-xs mb-3">
-              {data.totalElements} result{data.totalElements !== 1 ? 's' : ''} found
-            </p>
-            <PurchaseTable purchases={data.content} onItemClick={setSelectedItemId} />
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-gray-500 text-xs">
+                {data.totalElements} result{data.totalElements !== 1 ? 's' : ''} found
+              </p>
+              <button
+                onClick={handleGenerateReport}
+                disabled={reportIds.size === 0}
+                className="text-blue-600 hover:text-blue-800 text-xs font-medium disabled:text-gray-300 disabled:cursor-not-allowed"
+              >
+                Generate Report ({reportIds.size})
+              </button>
+            </div>
+            <PurchaseTable purchases={data.content} onItemClick={setSelectedItemId} selectedIds={reportIds} onToggle={handleToggleReport} />
           </>
         )}
 

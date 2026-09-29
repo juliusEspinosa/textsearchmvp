@@ -10,6 +10,7 @@ public record PurchaseResponse(
         String buyer,
         UUID itemId,
         String itemName,
+        String itemNotes,
         int quantity,
         Instant purchasedAt
 ) {
@@ -19,6 +20,7 @@ public record PurchaseResponse(
                 purchase.getBuyer(),
                 purchase.getItem().getItemId(),
                 purchase.getItem().getItemName(),
+                purchase.getItem().getNotes(),
                 purchase.getQuantity(),
                 purchase.getPurchasedAt()
         );

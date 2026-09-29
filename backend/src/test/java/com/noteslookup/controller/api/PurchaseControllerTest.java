@@ -48,7 +48,7 @@ class PurchaseControllerTest {
     private static final Instant NOW = Instant.now();
 
     private PurchaseResponse sampleResponse() {
-        return new PurchaseResponse(PURCHASE_ID, "Alice", ITEM_ID, "Wireless Mouse", 3, NOW);
+        return new PurchaseResponse(PURCHASE_ID, "Alice", ITEM_ID, "Wireless Mouse", "Ergonomic bluetooth mouse", 3, NOW);
     }
 
     @Test

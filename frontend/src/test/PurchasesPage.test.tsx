@@ -25,6 +25,7 @@ const samplePurchase = {
   buyer: 'John Smith',
   itemId: '123e4567-e89b-12d3-a456-426614174000',
   itemName: 'Wireless Mouse',
+  itemNotes: 'Ergonomic bluetooth mouse',
   quantity: 3,
   purchasedAt: '2026-01-01T00:00:00Z',
 }
@@ -98,6 +99,31 @@ describe('PurchasesPage', () => {
     })
   })
 
+  it('shows Add to Report checkboxes and Generate Report link', async () => {
+    renderWithProviders(<PurchasesPage />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Add to Report')).toBeInTheDocument()
+    })
+
+    const generateBtn = screen.getByText(/Generate Report/)
+    expect(generateBtn).toBeInTheDocument()
+    expect(generateBtn).toBeDisabled()
+  })
+
+  it('enables Generate Report after checking a row', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<PurchasesPage />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('checkbox')).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('checkbox'))
+
+    expect(screen.getByText(/Generate Report \(1\)/)).not.toBeDisabled()
+  })
+
   it('clicking item name opens notes modal', async () => {
     mockGetItem.mockResolvedValue({
       itemId: samplePurchase.itemId,
@@ -117,7 +143,7 @@ describe('PurchasesPage', () => {
     await user.click(screen.getByText('Wireless Mouse'))
 
     await waitFor(() => {
-      expect(screen.getByText('Ergonomic bluetooth mouse')).toBeInTheDocument()
+      expect(screen.getByText(/Created/)).toBeInTheDocument()
     })
   })
 })

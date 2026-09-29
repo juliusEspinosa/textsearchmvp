@@ -10,6 +10,7 @@ export interface PurchaseResponse {
   buyer: string
   itemId: string
   itemName: string
+  itemNotes: string | null
   quantity: number
   purchasedAt: string
 }
