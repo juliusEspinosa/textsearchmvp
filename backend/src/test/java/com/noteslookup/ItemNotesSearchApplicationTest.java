@@ -17,7 +17,6 @@ class ItemNotesSearchApplicationTest {
             .withDatabaseName("itemsearch_test")
             .withUsername("test")
             .withPassword("test")
-            .withCommand("postgres", "-c", "shared_preload_libraries=''")
             .withInitScript("init-test.sql");
 
     @DynamicPropertySource
